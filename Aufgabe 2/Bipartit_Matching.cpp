@@ -5,6 +5,7 @@ typedef vector<string> vs;
 typedef pair<int, int> pii;
 typedef vector<pii> vpii;
 typedef vector<vpii> vvpii;
+typedef vector<vi> vvi;
 
 #define what(x) cerr<<#x<<" is "<<x<<endl;
 
@@ -63,8 +64,9 @@ int main() {
 	cin.tie(0);
 
 	cin >> MAXN;
+	MAXN++;
 	// counter_used_words = MAXN;
-	counter_used_words = 0;
+	counter_used_words = 1;
 
 	// Einlesen von Donalds Wünschen in einer Zeile
 	cin.ignore();
@@ -94,15 +96,18 @@ int main() {
 	// Initialisieren eines 2D-Arrays mit 0
 	// int adj [2*MAXN][2*MAXN];
 
-	// Adjazenzliste mit Obst --> Schale; d.h. adj[Obst][Schale]
-	int adj[MAXN][MAXN];
-	// memset(adj, -1000, sizeof(adj));
-	for (int i=0;i<MAXN;++i) {
-		for (int j=0;j<MAXN;++j) {
-			adj[i][j] = -INF;
-		}
-	}
+	// // Adjazenzliste mit Obst --> Schale; d.h. adj[Obst][Schale]
+	// int adj[MAXN][MAXN];
+	// // memset(adj, -1000, sizeof(adj));
+	// for (int i=0;i<MAXN;++i) {
+	// 	for (int j=0;j<MAXN;++j) {
+	// 		adj[i][j] = -INF;
+	// 	}
+	// }
 
+	// Adjazenzmatrix
+	// Obst -> Schale
+	vvi adj_first(MAXN, vi(MAXN, -INF));
 
 
 	// Anzahl der Beobachtungen
@@ -127,42 +132,91 @@ int main() {
 
 		for (int sorte : obstsorten) {
 			for (int schale : obstschalen) {
-				schale--;
-				if (adj[sorte][schale] < 0) adj[sorte][schale] = 0;
-				adj[sorte][schale] ++;
-				
+				// schale--;
+				if (adj_first[sorte][schale] < 0) adj_first[sorte][schale] = 0;
+				adj_first[sorte][schale] ++;
+
+				cout<<"Schale: "<<schale+1<<" -> Sorte: "<<num2words[sorte]<<"\n";
+
+				// if (adj[schale][sorte] < 0) adj[schale][sorte] = 0;
 				// adj[schale][sorte] ++;
 			}
 		}
+		cout<<"\n";
 	}
 
-	for (int i=0;i<MAXN;++i) {
-		for (int j=0;j<MAXN;++j) {
-			if(adj[i][j]>0) cout<<"i: "<<num2words[i]<<" j: "<<j+1<<" -> "<<adj[i][j]<<"\n";
+	for (int i=1;i<MAXN;++i) {
+		for (int j=1;j<MAXN;++j) {
+			if(adj_first[i][j]>0) cout<<"i "<<num2words[i]<<" -> j "<<j<<": "<<adj_first[i][j]<<"\n";
 		}
 	}	
 
 
 
-	vi u(MAXN), v(MAXN), p(MAXN), way(MAXN);
+	vi value_sorten(MAXN), value_schalen(MAXN), parent(MAXN), way(MAXN);
+
+	// Anfangswert der Sorten ist 0
+	fill(value_sorten.begin(), value_sorten.end(), 0);
+
+	// neue Adjazenzmatrix (Gleichheitsgraph)
+	vvi adj(MAXN, vi(MAXN, -INF));
+
+
+	// für alle Obstschalen:
+	for (int i = 1; i < MAXN; ++i) {
+		
+		// maximales Kantengewicht und entsprechenden Vorgängerknoten bestimmen
+		int maxV = -INF, maxE;
+
+		for (int j = 1; j < MAXN; ++j) {
+			what(adj_first[j][i]);
+			if (adj_first[j][i] > maxV) {
+				maxV = adj_first[j][i];
+				maxE = j;
+			}
+		}
+
+		what(maxE);
+		// Gleichheitsgraph wird erstellt
+		adj[maxE][i] = maxV;
+
+		// Anfangswert der Schale ist das maximale Kantengewicht
+		value_schalen[i] = maxV;
+	}
+
 
 	// hungarian algorithm
-	for (int i = 0; i < MAXN; ++i) {
-		p[0] = i;
-		int j0 = 0;
 
-		vi minv (MAXN, INF);
-		vi used (MAXN, false);
+	// für alle Obstsorten
+	for (int i = 1; i < MAXN; ++i) {
+		cout<<"obstsorte: "<<num2words[i]<<"\n";
+		int j0 = 0;
+		parent[j0] = i;
+
+		vi minv(MAXN, INF);
+		vi used(MAXN, false);
 
 		do {
 			used[j0] = true;
-			int i0 = p[j0];
+
+			// Vorgänger (Sorte) ermitteln
+			int i0 = parent[j0];
+
+			// delta Wert anfangs auf -unendlich
 			int delta = INF;
+
 			int j1;
 
-			for (int j = 0; j < MAXN; ++j) {
+			// für alle Obstschalen
+			for (int j = 1; j < MAXN; ++j) {
+				cout<<"obstschale: "<<j<<"\n";
+				
+				// falls die Obstschale nicht schon gecheckt wurde
 				if (!used[j]) {
-					int cur = adj[i0][j] - u[i0] - v[j];
+					int cur = -adj[i0][j] + value_sorten[i0] + value_schalen[j];
+
+					cout<<"adj "<<adj[i0][j]<<" - u[i0] "<<value_sorten[i0]<<" v[j] "<<value_schalen[j]<<" -> "<<cur<<"\n";
+					// int cur = adj[j][i0] - u[i0] - v[j];
 
 					if (cur < minv[j]) {
 						minv[j] = cur;
@@ -177,36 +231,52 @@ int main() {
 				}
 			}
 
-			for (int j = 0; j < MAXN; ++j) {
+			for (int j = 1; j < MAXN; ++j) {
 				if (used[j]) {
-					u[p[j]] += delta;
+					value_sorten[parent[j]] += delta;
 					
 					// what(v[j]); what(delta);
 					// avoid overflow error
-					if (abs(v[j] - delta) <= INF) v[j] -= delta;
+					if (abs(value_schalen[j] - delta) <= INF) value_schalen[j] -= delta;
 				}
 				else {
-					minv[j] -= delta;
+					// Value des freien Knoten (nicht benutzt) bleibt gleich
+					what(minv[j]); what(delta);
+					if (abs(minv[j] - delta) <= INF) minv[j] -= delta;
 				}
 			}
 
 			j0 = j1;
 		
-		} while(p[j0] != 0);
+		} while(parent[j0] != 0);
 
 		do {
 			int j1 = way[j0];
-			p[j0] = p[j1];
+			parent[j0] = parent[j1];
 			j0 = j1;
 		} while (j0);
 	}
 
 	vpii result;
-	for (int i = 0; i < MAXN; ++i) {
-		result.push_back({p[i], i});
+	for (int i = 1; i < MAXN; ++i) {
+		result.push_back({parent[i], i});
 
-		cout<<p[i]+1<<" -> "<<num2words[i]<<"\n";
+		// cout<<p[i]+1<<" -> "<<num2words[i]<<"\n";
+		cout<<num2words[parent[i]]<<" -> "<<i<<"\n";
+		// cout<<i+1<<" -> "<<num2words[p[i]]<<"\n";
 	}
+
+
+
+	// TODO:
+	// check ob das gefundene Matching eindeutig ist
+
+	for (int i = 0; i < result.size(); ++i) {
+		// int sorte, schale;
+		// tie(sorte, schale) = result[i];
+
+
+	}	
 
 
 
