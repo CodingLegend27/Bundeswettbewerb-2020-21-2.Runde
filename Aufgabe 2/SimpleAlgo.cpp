@@ -76,6 +76,7 @@ int main() {
 
 	vs donalds_wunsche = getline2vector_string(donalds_wunsche_line);
 
+	vb isWunsch(MAXN, false);
 
 	for (string word : donalds_wunsche) {
 		// Donalds Wünsche zum Konvertieren hinzugefügt
@@ -83,6 +84,8 @@ int main() {
 
 		// Nummer des Wunsches wird zu 'wunsche' hinzugefügt
 		wunsche.push_back(words2num[word]);
+
+		isWunsch[words2num[word]] = true;
 	}
 
 	vvi adj(MAXN, vi(MAXN, -1));
@@ -128,9 +131,9 @@ int main() {
 
 		maxVObstsorten[i] = maxV;
 	}
-	for (int i=1;i<MAXN;++i) {
-		cout<<"Sorte "<<num2words[i]<<" mit maxV "<<maxVObstsorten[i]<<"\n";
-	}
+	// for (int i=1;i<MAXN;++i) {
+	// 	cout<<"Sorte "<<num2words[i]<<" mit maxV "<<maxVObstsorten[i]<<"\n";
+	// }
 
 	// maxValue-Verbindung für jede Schale bestimmen
 	vi maxVSchalen(MAXN);
@@ -146,9 +149,9 @@ int main() {
 		maxVSchalen[j] = maxV;
 	}
 
-	for (int i=1;i<MAXN;++i) {
-		cout<<"Schale: "<<i<<" mit maxV"<<maxVSchalen[i]<<"\n";
-	}
+	// for (int i=1;i<MAXN;++i) {
+	// 	cout<<"Schale: "<<i<<" mit maxV"<<maxVSchalen[i]<<"\n";
+	// }
 
 	vector<set<int> > sorte2schale(MAXN);
 	vector<set<int> > schale2sorte(MAXN);
@@ -162,29 +165,33 @@ int main() {
 		}
 	}
 
-	for (int sorte = 1; sorte < MAXN; ++sorte) {
-		cout << "Sorte: "<<num2words[sorte]<<"\n";
+	// for (int sorte = 1; sorte < MAXN; ++sorte) {
+	// 	cout << "Sorte: "<<num2words[sorte]<<"\n";
 
-		for (int schale : sorte2schale[sorte]) cout << schale << " ";
+	// 	for (int schale : sorte2schale[sorte]) cout << schale << " ";
 
-		cout << "\n";
-	}
+	// 	cout << "\n";
+	// }
 
-	for (int schale = 1; schale < MAXN; ++schale) {
-		cout << "Schale: "<<schale<<"\n";
+	// for (int schale = 1; schale < MAXN; ++schale) {
+	// 	cout << "Schale: "<<schale<<"\n";
 
-		for (int sorte : schale2sorte[schale]) cout << num2words[sorte]<< " ";
+	// 	for (int sorte : schale2sorte[schale]) cout << num2words[sorte]<< " ";
 
-		cout <<"\n";
-	}
+	// 	cout <<"\n";
+	// }
 
 	bool works = true;
+
+	set<int> finalSchalen;
 
 	for (int w : wunsche) {
 		cout << "Sorte: " << num2words[w] << "\n";
 
 		if (sorte2schale[w].size() == 1) {
 			cout << "> ist sicher in Schale Nr. " << *sorte2schale[w].begin() << "\n";
+
+			finalSchalen.insert(*sorte2schale[w].begin());
 		}
 		else if (sorte2schale[w].empty()) {
 			works = false;
@@ -194,12 +201,14 @@ int main() {
 			cout << "> kann sich in folgenden Schalen befinden: Nr. ";
 			for (int schale : sorte2schale[w]) {
 				cout << schale << " ";
+
+				finalSchalen.insert(schale);
 			}
 			cout << "\n";
 
 			for (int schale : sorte2schale[w]) {
 				if (schale2sorte[schale].size() > 1) {
-					works = false;
+					// works = false;
 
 					cout << ">> in Schale Nr. " << schale << " können sich auch folgende Obstsorten befinden: ";
 
@@ -207,9 +216,15 @@ int main() {
 						if (sorte != w) {
 							cout << num2words[sorte] << " ";
 						}
+
+						// falls die Sorte kein Wunsch ist, ist sie ein Konkurrent 
+						// die Schalen für den Obstspieß sind dann nicht mehr eindeutig
+						if (!isWunsch[sorte]) works = false;
+
 					}
 					cout << "\n";
 				}
+
 			}
 		}
 
@@ -217,9 +232,15 @@ int main() {
 	}
 
 	// Fazit:
-	cout << "\n>>> Zusammenfassung: Donalds Wünsche können ";
+	cout << "\n>>> Zusammenfassung: Donalds Wunschsorten können ";
 	if (!works) cout << "nicht ";
-	cout << "eindeutig bestimmt werden!\n";
+	cout << "sicher bestimmt werden!\n";
+
+	if (works) {
+		cout << ">>> Donalds Sorten für seinen Wunschspieß befinden sich in den Schalen Nr. ";
+		for (int s : finalSchalen) cout << s << " ";
+		cout << "\n";
+	}
 
 	return 0;
 }
