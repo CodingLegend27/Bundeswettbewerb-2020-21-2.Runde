@@ -1,0 +1,10 @@
+> Folgende Stände sind eingeplant (im Format Start- und Endzeitpunkt + deren Länge 
+15 18 526
+13 15 795
+12 13 936
+8 12 714
+15 17 194
+8 12 66
+9 16 714
+8 9 503
+>> gesamtes Einkommen beträgt 9562
