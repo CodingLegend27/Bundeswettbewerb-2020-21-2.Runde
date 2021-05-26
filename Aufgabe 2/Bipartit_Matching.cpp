@@ -251,8 +251,15 @@ int main() {
 		} while(parent[j0] != 0);
 
 		do {
+
+			// ####### TODO #########
+			// diese loop wird oft nicht mehr verlassen!!
+			// fixen!
+			// cout<<"here loopi \n";
 			int j1 = way[j0];
+			what(j1);
 			parent[j0] = parent[j1];
+			what(parent[j0]); what(parent[j1]);
 			j0 = j1;
 		} while (j0);
 	}

@@ -160,6 +160,10 @@ int main() {
 				// kanten.push_back({adj[i][j], i, j});
 				numSorteInPossibleSchalen[i]++;
 			}
+			else {
+				// adj[i][j] != maxVObstsorten[i]
+				adj[i][j] = -1;
+			}
 		}
 	}
 
@@ -256,7 +260,13 @@ int main() {
 		for (int sorte : wunsche) {
 			cout<<"> Sorte "<<num2words[sorte]<<" in Schale Nr. "<<sorte2schale[sorte]<<"\n";
 		}
+		return 0;
 	}
+
+
+	// Adjazenzmatrix für die Abhängigkeiten
+	vvi dependencies(MAXN, vi());
+
 
 	if (failed) {
 		cout<<"KEINE eindeutige Bestimmung aller Donalds Obstsorten möglich:\n";
@@ -285,13 +295,17 @@ int main() {
 							cout<<" "<<num2words[i];
 
 							possibleSorten.insert(i);
-						}
+						}	
 					}
 					cout<<" befinden\n";
 				}
 
 				cout<<"  >>> für die Bestimmung der Sorte "<<num2words[sorte]<<" ist die Bestimmung der Sorten";
-				for (int s : possibleSorten) cout<<" "<<num2words[s];
+				for (int s : possibleSorten) {
+					cout<<" "<<num2words[s];
+
+				}
+
 				cout<<" notwendig!\n";
 
 			}
@@ -309,6 +323,100 @@ int main() {
 	// Abhängigkeitsbaum erstellen, falls es nicht ganz gelöst wurde
 	// denjenigen Knoten (oder mehrere) finden, durch dessen eindeutige Bestimmung die anderen auch gelöst werden können
 	// oder gibt es mehrere solche und müssen alle, oder nur manche bestimmt werden ?
+
+	for (int i = 1; i < MAXN; ++i) {
+		if (usedSorte[i]) continue;
+
+		set<int> possbileSchalen;
+
+		for (int j = 1; j < MAXN; ++j) {
+			
+			if (usedSchale[j]) {
+				what(usedSchale[j]);
+				continue;
+			}
+
+			if (final_adj[i][j]) {
+				possbileSchalen.insert(j);
+			}
+		}
+
+		// for (int schale : possbileSchalen) {
+		// 	for (int andereSorte = 1; andereSorte < MAXN; ++andereSorte) {
+		// 		if (i == andereSorte) continue;
+
+		// 		if (final_adj[andereSorte][schale]) {
+		// 			dependencies[i].push_back(andereSorte);
+		// 		}
+		// 	}
+		// }
+
+		for (int andereSorte = 1; andereSorte < MAXN; ++andereSorte) {
+			if (i == andereSorte) continue;
+
+			for (int  schale : possbileSchalen) {
+				if (final_adj[andereSorte][schale]) {
+					dependencies[i].push_back(andereSorte);
+
+					// break, damit eine Sorte nicht zweimal von derselben Sorte 'abhängig' ist
+					break;
+				}
+			}
+		}
+	}
+
+
+	for (int i=1; i<MAXN;++i) {
+		if (dependencies[i].empty()) continue;
+		cout<<num2words[i]<<"\n";
+		for (int next : dependencies[i]) {
+			// what(next);
+			cout<<" -> "<<num2words[next]<<"\n";
+		}
+	}
+
+	// Ermittlung der Abhängigkeiten der Wünsche
+	// vi visited(MAXN, false);
+	queue<int> q;
+
+	for (int wunsch : wunsche) {
+		if (usedSorte[wunsch]) continue;
+		
+		vi visited(MAXN, false);
+		visited[wunsch] = true;
+
+		// if (!visited[wunsch]) continue;
+
+		q.push(wunsch);
+		visited[wunsch] = true;
+
+		while(!q.empty()) {
+			int akt = q.front();
+			q.pop();
+
+			for (int next : dependencies[akt]) {
+				if (!visited[next]) {
+					visited[next] = true;
+					q.push(next);
+				}
+			}
+		}
+		visited[wunsch] = false;
+
+		// Knoten die erreicht wurden, 
+		// machen die Obstsorte abhängig
+		cout << "> Sorte "<<num2words[wunsch]<<" ist abhängig von:";
+		for (int i = 1; i < MAXN; ++i) {
+			if (visited[i]) {
+				cout<<" "<<num2words[i];
+			}
+		}
+		cout<<"\n";
+	}
+
+
+
+
 
 
 	// for (tiii k : kanten) {

@@ -28,6 +28,7 @@ unordered_map<int, string> num2words;
 // Zähler beginnt bei MAXN, damit Schalen und Sorten nicht vertauscht werden können
 int counter_used_words;
 
+// Hinzufügen eines Wortes zum Konverter
 void add_word_to_converter(string& word) {
 	if (words2num.find(word) == words2num.end()) {
 		// Wort muss noch hinzugefügt werden
@@ -66,7 +67,8 @@ int main() {
 
 	cin >> MAXN;
 	MAXN++;
-	// counter_used_words = MAXN;
+
+	// Anzahl der bis jetzt verschiednen Wörter wird gezählt
 	counter_used_words = 1;
 
 	// Einlesen von Donalds Wünschen in einer Zeile
@@ -99,6 +101,7 @@ int main() {
 		getline(cin, obstschalen_line);
 		getline(cin, obstsorten_line);
 
+		// Konvertieren der Zeileneingaben zu vector<string>
 		vi obstschalen = getline2vector_int(obstschalen_line);
 		vs obstsorten_string = getline2vector_string(obstsorten_line);
 
@@ -108,6 +111,7 @@ int main() {
 			obstsorten.push_back(words2num[sorte]);
 		}
 
+		// Hinzufügen der Kantengewichtungen zwischen der aktuellen Obstsorte und Schalennummer
 		for (int sorte : obstsorten) {
 			for (int schale : obstschalen) {
 				if (adj[sorte][schale] < 0) 
@@ -131,9 +135,6 @@ int main() {
 
 		maxVObstsorten[i] = maxV;
 	}
-	// for (int i=1;i<MAXN;++i) {
-	// 	cout<<"Sorte "<<num2words[i]<<" mit maxV "<<maxVObstsorten[i]<<"\n";
-	// }
 
 	// maxValue-Verbindung für jede Schale bestimmen
 	vi maxVSchalen(MAXN);
@@ -149,10 +150,6 @@ int main() {
 		maxVSchalen[j] = maxV;
 	}
 
-	// for (int i=1;i<MAXN;++i) {
-	// 	cout<<"Schale: "<<i<<" mit maxV"<<maxVSchalen[i]<<"\n";
-	// }
-
 	vector<set<int> > sorte2schale(MAXN);
 	vector<set<int> > schale2sorte(MAXN);
 	for (int sorte = 1; sorte < MAXN; ++sorte) {
@@ -164,22 +161,6 @@ int main() {
 			}
 		}
 	}
-
-	// for (int sorte = 1; sorte < MAXN; ++sorte) {
-	// 	cout << "Sorte: "<<num2words[sorte]<<"\n";
-
-	// 	for (int schale : sorte2schale[sorte]) cout << schale << " ";
-
-	// 	cout << "\n";
-	// }
-
-	// for (int schale = 1; schale < MAXN; ++schale) {
-	// 	cout << "Schale: "<<schale<<"\n";
-
-	// 	for (int sorte : schale2sorte[schale]) cout << num2words[sorte]<< " ";
-
-	// 	cout <<"\n";
-	// }
 
 	bool works = true;
 
@@ -208,7 +189,6 @@ int main() {
 
 			for (int schale : sorte2schale[w]) {
 				if (schale2sorte[schale].size() > 1) {
-					// works = false;
 
 					cout << ">> in Schale Nr. " << schale << " können sich auch folgende Obstsorten befinden: ";
 
