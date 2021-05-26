@@ -1,4 +1,11 @@
 .DS_Store
 */.DS_Store
-*.out
-*.dSYM
+Aufgabe 1/*.out
+Aufgabe 2/*.out
+Aufgabe 1/*.dSYM
+Aufgabe 2/*.dSYM
+
+Einsendung.zip
+settings.json
+*.docx
+
