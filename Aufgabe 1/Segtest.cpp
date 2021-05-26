@@ -43,6 +43,21 @@ vi optimal, pre;
 // Wert des Einkommens (ganz am Ende des Programms)
 int INCOME;
 
+
+bool sorting(tiii& first, tiii& second){
+    int a1, a2, b1, b2, c1, c2;
+    tie(a1, b1, c1) = first;
+    tie(a2, b2, c2) = second;
+
+    if (a1 == a2) {
+        if (b1 == b2) {
+            return c1 < c2;
+        }
+        return b1 < b2;
+    }
+    return a1 < a2;
+}
+
 bool sortBySecondElseThird(const tiii& a, const tiii& b) {
     int a1, a2, a3, b1, b2, b3;
     tie(a1, a2, a3) = a;
@@ -77,11 +92,26 @@ int binary_search(const vi& arr, const int value) {
         else {
             low = mid + 1;
         }
+
+        // // value wurde gefunden
+        // if (arr[mid] == value) {
+        //     return mid;
+        // }
+        // else if (arr[mid] < value) {
+        //     // untere Grenze neu setzen
+        //     low = mid + 1;
+        // }
+        // else {
+        //     // obere Grenze neu setzen
+        //     up = mid - 1;
+        // }
     }
+    cout << "finish";
 
     // dasselbe Element wurde nicht in arr gefunden,
     // daher wird der Index zurückgegeben, wo es eingefügt werden müsste
     return low-1;
+    //return up+1;
 }
 
 
@@ -125,6 +155,29 @@ void build(const vi& max_arr) {
     }
 }
 
+// In der Update-Methode des Segmentsbaum werden alle Elemente in dem übergebenen Bereich
+// mit dem übergebenen Wert und der Operation + aktualisiert
+// Da die Operation 'Addition' kommutativ ist, wird im Segmentbaum keine Lazy Propagation benötigt
+// void update(int j, int x, int y=neutral_element, int a=1, int b=N, int i=1) {
+//     segment_tree[i] = max(y, segment_tree[i]);
+
+//     if (a == b) {
+//         segment_tree[i] = x;
+//         return;
+//     }
+//     int m = (a + b)/2;
+
+//     if (y <= m) {
+//         update(j, x, y, a, m, left(i));
+//     }
+//     else {
+//         update(j, x, y, m+1, b, right(i));
+//     }
+
+//     // i wird wieder mit dem Maximum aus dem linken und rechten vorhergehenden Knoten aktualisiert
+//     segment_tree[i] = max(segment_tree[left(i)], segment_tree[right(i)]);
+// }
+
 
 // folgende Methode aktualisiert beide Segmentbäume (min und max):
 // In der Apply-Methode des Segementbaums werden alle Elemente in dem übergebenen Bereich (von l bis r)
@@ -133,13 +186,11 @@ void build(const vi& max_arr) {
 void apply(int l, int r, int x, int y=id, int a=1, int b=sizeSegmentTree, int i=1) {    
     max_segment_tree[i] = y;
 
-    y += operation[i];
-    // y = operation[i];
+    y = operation[i];
     operation[i] = id;
 
     if (l <= a and b <= r) {
         operation[i] = x;
-        y = x;
         max_segment_tree[i] = x;
         return;
     }
@@ -172,7 +223,7 @@ void apply(int l, int r, int x, int y=id, int a=1, int b=sizeSegmentTree, int i=
 // anschlie0end wird der Baum herabgestiegen,
 // um Segmente zu finden, die das Intervall [a; b] aufteilen
 
-int max_seg_query(const int& l, const int& r, int a=1, int b=sizeSegmentTree, int i=1) {
+int max_seg_query(const int l, const int r, int a=1, int b=sizeSegmentTree, int i=1) {
     if (l == r and l == 0) {
         return 0;
     }
@@ -222,219 +273,21 @@ int main() {
     // cout<<"> Bitte geben Sie die Straßenlänge in Meter ein\n"<<flush;
     // cin >> maxL;
 
-    // oder:
-    maxL = 1000;
-
-    INCOME = 0;
-
-    cin >> N;
-
-    // Speicher für benutzte Stände
-    vi used_elements;
-
-    used_elements.resize(N, false);
-
-    vector<tiii> arr(N);
-    for (int i = 0; i < N; ++i) {
-    	// Beginn, Ende und Länge werden eingelesen
-    	int a, b, c; 
-    	cin >> a >> b >> c;
-
-    	arr[i] = {a, b, c};
-    }
-
-    // Sortieren nach ihrem Endzeitpunkt
-    // bei gleichem Endzeitpunkt, ist die Länge entscheidend
-    sort(arr.begin(), arr.end(), sortBySecondElseThird);
-
-    // die Start- und Endzeiten werden in Arrays gespeichert,
-    // nachdem sie sortiert wurden
-    // vi starting_times(N), ending_times(N);
-    starting_times.resize(N);
-    ending_times.resize(N);
-    weights.resize(N);
-
-    int minStartTime = INF, maxEndTime = 0;
-
-
-    for (int i = 0; i < N; ++i) {
-        int start, end, length;
-        tie(start, end, length) = arr[i];
-        
-        // Einkommen durch den Stand wird berechnet
-        int weight = (end - start) * length;
-
-        starting_times[i] = start;
-        ending_times[i] = end;
-        weights[i] = weight;
-
-        minStartTime = min(minStartTime, start);
-        maxEndTime = max(maxEndTime, end);
-    }
-
-    // + + + Segmentbaum + + + //
-
-    // Unterteilung Stundenweise, beginnend von minStartTime bis maxEndTime
-    // somit ist intervallSize = 1 (Stunde)
-    int intervallSize = 1;
-
-
-    // Array speichert die aktuelle Höhe zum aktuellen Intervall
-    int sizeTimeInterval = (maxEndTime - minStartTime) / intervallSize;
-
-
-    // es kann sein, das sizeTimeInterval keine 2er Potenz ist, 
-    // daher werden noch zusätzliche leere Speicherplätze mit hinzugefügt,
-    // damit die Größe des Segmentbaums eine 2er Potenz
-    int potenz = ceil(log2(sizeTimeInterval));
-
-    // rest --> auffüllen
-    sizeSegmentTree = pow(2, potenz);
-
-    int rest = sizeSegmentTree - sizeTimeInterval;
-
-    // Erstellen des Segmentbaumes, mit einem leeren Array,
-    // da noch keine Stände festgelegt wurden
+    sizeSegmentTree = 16;
     build(vi(sizeSegmentTree, 0));
 
+    apply(0, sizeSegmentTree, 0);
+    // apply(2, 3, 5);
+    // apply(3, 3, 3);
+    // apply(0, 0, 4);
 
-    cout << "> Folgende Stände sind eingeplant (im Format Start- und Endzeitpunkt + deren Länge \n";
-
-    int counterUsed = 0;
-    int counterUnpossible = 0;
-    
-    bool firstTime = true;
-
-    while(true) {
-
-        counterUsed = 0;
-        counterUnpossible = 0;
-        vector<tiii> newArr;
-        vi newStarting_times, newEnding_times, newWeights;
-        for (int i = 0; i < N; ++i) {
-
-            if (used_elements[i]) {
-                counterUsed++;
-            }
-            else {
-                int& length = get<2>(arr[i]);
-
-                int usedheight = max_seg_query(starting_times[i]-minStartTime, ending_times[i]-minStartTime-1);                
-            
-                if (usedheight + length > maxL) {
-                    // kein Platz mehr für das aktuelle Elemente
-                    counterUnpossible++;
-                }
-                else {
-                    newArr.push_back(arr[i]);
-                    newStarting_times.push_back(starting_times[i]);
-                    newEnding_times.push_back(ending_times[i]);
-                    newWeights.push_back(weights[i]);
-                }
-            }
-        }
-
-        N -= counterUsed;
-        N -= counterUnpossible;
-
-        used_elements.clear();
-        used_elements.resize(N, false);
-
-        starting_times = newStarting_times;
-        ending_times = newEnding_times;
-        weights = newWeights;
-
-        if (N == 0) {
-            break;
-        }
-        else if (!firstTime) {
-            if (counterUnpossible <= 0 and counterUsed <= 0) {
-                break;
-            }
-        }
+    int max1 = max_seg_query(0, 0);
+    what(max1);
 
 
-        // + + + Weighted Job Scheduling Problem + + + // 
 
-        // Array das für den einen Stand i denjenigen Stand pre[i] speichert,
-        // der vor dem akutellen Stand i endet,
-        // damit die Endzeit von pre[i] < starting_times[i] gilt
-        pre.resize(N);
-
-        for (int i = 0; i < N; ++i) {
-            // Index des vorherigen Standes wird gesucht,
-            // dessen Endzeit noch vor der Startzeit des aktuellen Stands ist
-            int index_pre = binary_search(ending_times, starting_times[i]);
-            // index verringern, damit das Element gefunden wird, 
-            // das noch vor der aktuellen Startzeit endet
-            // index_pre --; 
-
-            pre[i] = index_pre;
-        }
-
-
-        // base case für Dynamische Programmierung (rekursiv)
-        // optimal[0] = 0;
-        for (int i = 0; i < N; ++i) {
-            int opt_i = getOpt(i);
-            optimal.push_back(opt_i);
-        }
-
-        // was nun geschieht: 
-        // - eine optimale Reihe wurde gefunden,
-        //  -> diese wird nun gespeichert
-        // - und die Höhen im Segmentbaum werden aktualisiert
-
-        vi solution;
-        // Backtracking der Lösung; (Lösung = Anordnung der Stände)
-        for (int i = N-1; i >= 0;) {
-            int following_getOpt;
-            if (i > -1) following_getOpt = getOpt(i - 1);
-            else following_getOpt = 0;
-
-            if (weights[i] + getOpt(pre[i]) > following_getOpt) {
-                solution.push_back(i);
-                // cout << "sol\n";
-
-                used_elements[i] = true;
-
-                // es wird mit dem Vorgänger von i fortgesetzt
-                i = pre[i];
-            }
-            else --i;
-        }
-
-        INCOME += optimal[N-1];
-        optimal.clear();
-
-
-        // Erhöhung der Höhen
-        for (int i : solution) {
-            int start = starting_times[i];
-            int end = ending_times[i];
-            int weight = weights[i];
-
-            int& length = get<2>(arr[i]);
-
-            cout << start << " " << end << " " << length << "\n";
-
-            int aktHeight = max_seg_query(start-minStartTime, end-minStartTime-1);
-            if (aktHeight<0) aktHeight = 0;
-
-            // Segmentbaum für das Intervall [start; end] auf length + aktHeight setzen
-            // length entspricht der Breite des aktuellen Standes
-            // das Ende wird nicht eingeschlossen, sprich nicht erhöht, 
-            // da es sich sonst mit der anschließenden Höhe eines Startzeitpunkt s, s=end, doppelt erhöht werden würde,
-            // obwohl dies in der Realität nicht der Fall wäre --> nachfolgender Stand mit end1=start2
-            apply(start-minStartTime, end-minStartTime-1, length+aktHeight);
-
-        }
-
-        firstTime = false;
-
-    }
-
-    cout << ">> gesamtes Einkommen beträgt " << INCOME;
 
     return 0;
+
+
 }
